@@ -1,0 +1,52 @@
+mkdir /mnt/mytmpfs
+
+Changer les droits sur ce répertoire :
+
+chmod 777 /mnt/mytmpfs
+
+Un tmpfs se monte comme tous les points de montage sous linux :
+
+mount -t tmpfs -o size=512M tmpfs /mnt/mytmpfs
+
+-t pour le type de fichier, -o pour les options, dont la taille (si elle n'est pas précisé la taille par défaut est égale à 50% de votre RAM), puis le périphérique, ici tmpfs ou none avec tmpfs, il sera plus facile de le repérer avec la commande df, puis /mnt/mytmpfs point de montage.
+
+Pour le monter automatiquement au démarrage, éditez le fichier /etc/fstab comme ceci :
+
+tmpfs /mnt/mytmpfs tmpfs defaults,size=1g 0 0
+
+Mais que faire avec mon tmpfs tout frais ?
+
+Un peu d'imagination ! voyons ! vous pouvez peut être y mettre les logs d'un apache pour gagner en performance, ou vos fichiers en téléchargement, votre cache Firefox, des fichiers de sauvegardes en fabrication avant envoi sur un autre serveur etc.... L'utilisation de cette technique pourra vous permettre de moins sollicité le disque dur de votre machine.
+
+Test de performance :
+
+Écriture sur Tmpfs :
+
+root@dg:~# mount -t tmpfs tmpfs -o size=1024M /mnt/test
+root@dg:~# cd /mnt/test
+root@dg:/mnt/test# time dd if=/dev/zero of=test.bin bs=1024k count=900
+900+0 enregistrements lus
+900+0 enregistrements écrits
+943718400 octets (944 MB) copiés, 1,60375 s, 588 MB/s
+
+real    0m1.608s
+user    0m0.000s
+sys    0m1.612s
+
+Écriture sur Ext4 :
+
+root@dg:~# cd /mnt/test1
+root@dg:/mnt/test1# time dd if=/dev/zero of=test.bin bs=1024k count=900
+900+0 enregistrements lus
+900+0 enregistrements écrits
+943718400 octets (944 MB) copiés, 12,7702 s, 73,9 MB/s
+
+real    0m12.786s
+user    0m0.008s
+sys    0m2.340s
+
+Le gain vitesse n'est pas négligeable comme vous pouvez le voir :)
+
+Chose importante à garder à l'esprit, les données présente dans votre tmpfs sont volatile, en cas de coupure de courant sur votre serveur, vous perdrez vos données.
+
+Bonne bidouille à vous.
